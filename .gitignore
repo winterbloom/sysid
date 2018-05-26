@@ -1,0 +1,7 @@
+# Emacs save files #
+####################
+*~
+
+# Compiled source #
+###################
+*.class
