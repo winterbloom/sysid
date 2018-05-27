@@ -24,7 +24,7 @@ public class Actuators implements Runnable {
 	    float temp = UltraMain.getPower();
 	    motor.speed(temp);
 	    //motor.speed(40);
-	    System.out.println(loopCount++ + ": " + temp);
+	    if (loopCount % 100 == 0) System.out.println(loopCount++ + ": " + temp);
 	}
 	    
 	

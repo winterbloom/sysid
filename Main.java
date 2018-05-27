@@ -15,8 +15,8 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {	
         sense = new Thread(new Sensors());
         drive = new Thread(new Actuators());
-	//sense.start();
-	//drive.start();
+	sense.start();
+	drive.start();
 	Thread.sleep(1000);
 
 	//Create position profile
@@ -43,17 +43,36 @@ public class Main {
 	    System.out.println(name.toString() + ": " + accels.get(name).toString());
 	}
 	
-	/*float gravity = 25;
-	float mass = 1;
+	float gravity = 350;
+	float mass = .13f;
 	
-	//int loopCycle = 0;
-	while(false || (!false != false && !false)) {
+	while(!false) {
 	    float zero = getZero();
 
 	    //Create power profile
 	    HashMap<Long, Float> powerPf = new HashMap<>();
-	    
-	    }*/
+	    for (int i = 0; i < accels.size(); i++) {
+		
+		powerPf.put(i*step, mass * (accels.get(i*step) - gravity));
+	    }
+
+	    System.out.println(powerPf);
+
+	    //Run power profile
+	    long start = System.nanoTime();
+	    while (System.nanoTime() - start < (powerPf.size() - 1) * step) {
+		//Interpolator
+		long time = System.nanoTime() - start;
+		float low = powerPf.get(time - time % step);
+		float high = powerPf.get(time - (time % step) + step);
+		float interVal = low + (high - low) * (time % step)/(float)step;
+		System.out.println("low: " + low);
+		System.out.println("high: " + high);
+		System.out.println("inter: " + interVal);
+		power = interVal;
+		try { Thread.sleep(10); } catch (InterruptedException e) {}
+	    }
+	}
     }
 
     private static HashMap<Long, Float> getAccel(HashMap<Long, Float> pos) {
@@ -68,11 +87,8 @@ public class Main {
 	HashMap<Long, Float> derivs = new HashMap(points.size() - 1);
 	for (int i = 0; i < points.size() - 2; i++) {
 	    //Calculate the numerical derivative between i and i+1
-	    System.out.println("i: " + i);
-	    System.out.println("points: " + points);
 	    derivs.put(offset + step*i, (float)((points.get(i*step + offset - step / 2)-points.get((i+1)*step + offset - step / 2))/((double)step/(double)nanosPerSecond)));
 	}
-	System.out.println("derivs: " + derivs);
 	return derivs;
     }
 

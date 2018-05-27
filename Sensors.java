@@ -39,7 +39,7 @@ public class Sensors implements Runnable {
 	    senseFilter[loopNo] = this.senseVal;
 	    UltraMain.setSense(senseVal, getFilterDist());
 
-	    System.out.println(Thread.currentThread().isInterrupted() + " " + loopCycle++ + ": " + senseVal);
+	    //System.out.println(Thread.currentThread().isInterrupted() + " " + loopCycle++ + ": " + senseVal);
 	    
 	    loopNo = ++loopNo % senseFilter.length;
 	    } catch (Exception e) {
