@@ -14,9 +14,13 @@ public class Actuators implements Runnable {
 
 	AdafruitDcMotor motor = motorHat.getDcMotor("M3");
 	motor.setPowerRange(100.0f);
-	
+
+	int loopCount = 0;	
 	while(!Thread.currentThread().isInterrupted()) {
-	    motor.speed(UltraMain.getPower());
+	    float temp = UltraMain.getPower();
+	    motor.speed(temp);
+	    //motor.speed(40);
+	    System.out.println(loopCount++ + ": " + temp);
 	}
 	    
 	

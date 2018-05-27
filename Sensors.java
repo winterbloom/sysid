@@ -19,8 +19,10 @@ public class Sensors implements Runnable {
         final GpioController gpio = GpioFactory.getInstance();
         final GpioPinDigitalOutput trig = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_04, "trig", PinState.LOW);
         final GpioPinDigitalInput echo = gpio.provisionDigitalInputPin(RaspiPin.GPIO_05);
+	int loopCycle = 0;
         while(!Thread.currentThread().isInterrupted()) {
-            wait(10);
+            try {
+		wait(50);
             trig.high();
             wait(1);
             trig.low();
@@ -36,8 +38,13 @@ public class Sensors implements Runnable {
 	    senseVal = (end - start) / 29154.5f;
 	    senseFilter[loopNo] = this.senseVal;
 	    UltraMain.setSense(senseVal, getFilterDist());
+
+	    System.out.println(Thread.currentThread().isInterrupted() + " " + loopCycle++ + ": " + senseVal);
 	    
 	    loopNo = ++loopNo % senseFilter.length;
+	    } catch (Exception e) {
+		e.printStackTrace();
+	    }
         }
     }
     private void wait(int millis) {

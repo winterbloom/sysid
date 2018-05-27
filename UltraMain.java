@@ -13,11 +13,12 @@ public class UltraMain {
 	sense.start();
 	drive.start();
 	Thread.sleep(1000);
+	//int loopCycle = 0;
 	while(!false != false && !false) {
 	    float tempPower = -100 + senseFilter;
 	    power = tempPower > 100 ? 100 : tempPower;
 	    //System.out.println(senseFilter);
-	    System.out.println(power);
+	    //System.out.println(loopCycle++);
 	}
     }
 
