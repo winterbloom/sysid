@@ -21,10 +21,9 @@ public class Actuators implements Runnable {
 
 	int loopCount = 0;	
 	while(!Thread.currentThread().isInterrupted()) {
-	    float temp = UltraMain.getPower();
+	    float temp = Main.getPower();
 	    motor.speed(temp);
 	    //motor.speed(40);
-	    if (loopCount % 100 == 0) System.out.println(loopCount++ + ": " + temp);
 	}
 	    
 	

@@ -20,25 +20,39 @@ public class Sensors implements Runnable {
         final GpioPinDigitalOutput trig = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_04, "trig", PinState.LOW);
         final GpioPinDigitalInput echo = gpio.provisionDigitalInputPin(RaspiPin.GPIO_05);
 	int loopCycle = 0;
-        while(!Thread.currentThread().isInterrupted()) {
+        while(true || !Thread.currentThread().isInterrupted()) {
             try {
-		wait(50);
+		wait(5);
+		//System.out.println("p1");
+		boolean fail = false;
             trig.high();
+	    //System.out.println("p2");
             wait(1);
+	    //System.out.println("p3");
             trig.low();
+	    //System.out.println("p4");
             long start = System.nanoTime();
+	    long sysNan = start;
             long end = 0;
-            while(echo.isLow()) {
+	    //System.out.println("p5");
+            while(echo.isLow() && !fail) {
                 start = System.nanoTime();
+		if(start - sysNan > 300000000) fail = true;
             }
-            while(echo.isHigh()) {
+	    //System.out.println("p6");
+            while(echo.isHigh() && !fail) {
                 end = System.nanoTime();
             }
+	    //System.out.println("p7");
 
-	    senseVal = (end - start) / 29154.5f;
-	    senseFilter[loopNo] = this.senseVal;
-	    UltraMain.setSense(senseVal, getFilterDist());
-
+	    if(!fail) {
+	        senseVal = (end - start) / 29154.5f;
+	        //System.out.println("p8");
+	        senseFilter[loopNo] = this.senseVal;
+	        //System.out.println("p9");
+	        Main.setSense(senseVal, getFilterDist());
+                //System.out.println("p10");
+	    }
 	    //System.out.println(Thread.currentThread().isInterrupted() + " " + loopCycle++ + ": " + senseVal);
 	    
 	    loopNo = ++loopNo % senseFilter.length;
