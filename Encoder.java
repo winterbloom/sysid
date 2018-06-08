@@ -6,22 +6,28 @@ import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
-import com.pi4j.io.gpio.GpioPinDigitalOutput;
 
-public class Encoder {
+public class Encoder implements Runnable{
 
-    public static void main(String[] args) {
+    private final GpioController gpio = GpioFactory.getInstance();
+    private Readout output;
+    private final GpioPinDigitalInput phaseA;
+    private final GpioPinDigitalInput phaseB;
 
-	final GpioController gpio = GpioFactory.getInstance();
-	final GpioPinDigitalInput phaseA = gpio.provisionDigitalInputPin(RaspiPin.GPIO_28);
-	final GpioPinDigitalInput phaseB = gpio.provisionDigitalInputPin(RaspiPin.GPIO_29);
-	short state = 0;
+    public Encoder(Readout out, Pin A, Pin B) {
+	output = out;
+	phaseA = gpio.provisionDigitalInputPin(A);
+	phaseB = gpio.provisionDigitalInputPin(B);
+    }
+
+    public void run() {
+
+        int state = 0;
 	int pos = 0;
 	boolean a;
 	boolean b;
         int last;
-	long lastTime = System.nanoTime();
-	
+	long lastTime = System.nanoTime();	
 	
 	while(true) {
 	    last = pos;
@@ -61,7 +67,8 @@ public class Encoder {
 		}
 	    }
 	    if(last != pos || System.nanoTime() - lastTime > 100000000) {
-	      System.out.println(pos);
+	      //System.out.println(pos);
+	      output.setVal((double) pos / 1462.0);
 	      lastTime = System.nanoTime();
 	    }
 	}
