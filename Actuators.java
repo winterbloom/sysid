@@ -22,6 +22,7 @@ public class Actuators implements Runnable {
 	int loopCount = 0;	
 	while(!Thread.currentThread().isInterrupted()) {
 	    float temp = Main.getPower();
+	    temp = temp > 99.9f ? 99.9f : (temp < -99.9f ? -99.9f : temp);
 	    motor.speed(temp);
 	    //motor.speed(40);
 	}

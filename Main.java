@@ -1,6 +1,8 @@
 import java.util.HashMap;
 import java.util.List;
 import java.util.*;
+import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
+import org.apache.commons.math3.linear.*;
 
 public class Main {
 
@@ -14,7 +16,7 @@ public class Main {
     private static final long nanosPerSecond = 1000000000;
     private static final long step = (long)(nanosPerSecond * .05);
 
-    private static Float[] coefs = {50f, 0.1f, 0f};
+    private static Float[] coefs = {50f, 0.1f, -0.1f};
        
     public static void main(String[] args) throws InterruptedException {
 	/*Float[][] arry = {{2f, 1f, 1f}, {4f, -6f, 0f}, {-2f, 7f, 2f}};
@@ -48,15 +50,15 @@ public class Main {
 	posPf.put(13*step, 97f);
 	posPf.put(14*step, 98f);*/
 
-	for(int i = 0; i < 15; i++) {
+	for(int i = 0; i < 30; i++) {
 	    if(i < 15) {
-		posPf.put(step * i, (float) (i / 2f) * (i / 2f) * (i / 20f));
+		posPf.put(step * i, (float) (i / 2f) * (i / 2f) * 0.3f);
 	    } else {
-		posPf.put(step * i, 98f - ((28f - i) / 2f) * ((28f - i) / 2f) + i * 0.1f);
+		posPf.put(step * i, (98f - ((28f - i) / 2f) * ((28f - i) / 2f)) * 0.3f);
 	    }
 	}
 
-	System.out.println("posPf: " + posPf + "\n");
+	//System.out.println("posPf: " + posPf + "\n");
 
 	HashMap<Long, Float> accels = getAccel(posPf);
 
@@ -65,16 +67,21 @@ public class Main {
         predict = (getDeriv(posPf, step / 2));
 
         for(int i = 1; i < predict.size() - 1; i++) {
-	    predictDeriv.put(step * i, (predict.get(step * i - step / 2) + predict.get(step * i + step / 2)) / 2);
+	    float powerState = (predict.get(step * i - step / 2) + predict.get(step * i + step / 2)) / 2;
+	    powerState = powerState > 99.9f ? 99.9f : (powerState < -99.9f ? -99.9f : powerState);
+	    predictDeriv.put(step * i, powerState);
         }
 
 	extrapolate(predictDeriv);
 
 	for (Long name : accels.keySet()) {
-	    System.out.println("accels: " + name.toString() + ": " + accels.get(name).toString());
+	    //System.out.println("accels: " + name.toString() + ": " + accels.get(name).toString());
 	}
+
+	int loops = 0;
 	
 	do {
+	    loops++;
 	    float zero = getZero();
 
 	    //Create power profile
@@ -84,8 +91,8 @@ public class Main {
 		powerPf.put(i*step, coefs[0] + coefs[1] * accels.get(step * i) + coefs[2] * predictDeriv.get(step * i));
 	    }
 
-	    System.out.println("posPf: " + posPf + "\n");
-	    System.out.println("posPf deriv: " + getDeriv(posPf, step / 2) + "\n");
+	    //System.out.println("posPf: " + posPf + "\n");
+	    //System.out.println("posPf deriv: " + getDeriv(posPf, step / 2) + "\n");
 
 	    HashMap<Long, Float> actualPos = new HashMap<>();
 
@@ -104,11 +111,12 @@ public class Main {
 		power = interVal;
 		try { Thread.sleep(1); } catch (InterruptedException e) {}
 	        if(lastTime % step > time % step) {
-		    actualPos.put(time - time % step, senseVal - zero);
+		    actualPos.put(time - time % step,  senseFilter - zero);
 		}
 		lastTime = time;
 	    }
-	    System.out.println("actualPos: " + actualPos + "\n");
+	    power = coefs[0] / 6.0f;
+	    //System.out.println("actualPos: " + actualPos + "\n");
 	    HashMap<Long, Float> actual = new HashMap<Long, Float>();
 	    HashMap<Long, Float> actualDeriv = new HashMap<Long, Float>();
 	    actual = (getDeriv(actualPos, step / 2));
@@ -118,11 +126,19 @@ public class Main {
 	    for(int i = 1; i < actual.size() - 1; i++) {
 		actualDeriv.put(step * i, (actual.get(step * i - step / 2) + actual.get(step * i + step / 2)) / 2);
 	    }
-	    System.out.println("predictDeriv: " + predictDeriv + "\n");
-	    System.out.println("actualDeriv: " + actualDeriv + "\n");
-
+	    
+	    //System.out.println("predictDeriv: " + predictDeriv + "\n");
+	    //System.out.println("actualDeriv: " + actualDeriv + "\n");
+	    HashMap<Long, Float> accelDiffs = new HashMap<Long, Float>();
+	    HashMap<Long, Float> posDiffs = new HashMap<Long, Float>();
+	    for(int i = 0; i < actualPos.size(); i++) {
+	        posDiffs.put(i * step, posPf.get(i * step) - actualPos.get(i * step));
+            }
+            accelDiffs = getAccel(posDiffs);
+	    //System.out.println("accelDiffs: " + accelDiffs);
 	    //Performs regression on data
-	    ArrayList<Float[]> vectors = new ArrayList<Float[]>();
+	    /*
+            ArrayList<Float[]> vectors = new ArrayList<Float[]>();
 	    for(int i = 1; i < actualDeriv.size(); i++) {
 		for(int j = i + 1; j < actualDeriv.size(); j++) {
 		    for(int k = j + 1; k < actualDeriv.size(); k++) {
@@ -138,7 +154,7 @@ public class Main {
 			estimate = eliminate(matrix, out);
 			if (!(Double.isNaN(estimate[0]) || Double.isNaN(estimate[2]) || Double.isNaN(estimate[1]) ||
 			      Double.isInfinite(estimate[0]) || Double.isInfinite(estimate[1]) || Double.isInfinite(estimate[2]))) {
-			    System.out.println("estimate: " + Arrays.toString(estimate));
+			    //System.out.println("estimate: " + Arrays.toString(estimate));
 			    vectors.add(estimate);
 			}
 		    }
@@ -155,8 +171,52 @@ public class Main {
 	    }
 
 	    System.out.println("avgs: " + Arrays.toString(avgs));
+	    */
+
+	    ArrayList<Float[]> xDatar = new ArrayList<Float[]>();
+	    ArrayList<Float> yDatar = new ArrayList<Float>();
+	    for(int i = 1; i < actualDeriv.size(); i++) {
+		Float[] matrix = {powerPf.get(step * i) * -1, actualDeriv.get(step * i)};
+		float u = accelDiffs.get(i * step);
+		xDatar.add(matrix);
+		yDatar.add(u);
+	    }
+
+	    double[][] xData = new double[xDatar.size()][];
+	    double[] yData = new double[yDatar.size()];
+	    int i = 0;
+	    for(Float[] x: xDatar) {
+		double[] n = new double[x.length];
+		for(int j = 0; j < x.length; j++) {
+		    n[j] = Double.parseDouble(x[j].toString());
+		}
+		xData[i] = n;
+		i++;
+	    }
+	    i = 0;
+	    for(Float y: yDatar) {
+		double n = Double.parseDouble(y.toString());
+		yData[i] = n;
+		i++;
+	    }	
+
+	    OLSMultipleLinearRegression reg = new OLSMultipleLinearRegression();
+	    reg.newSampleData(yData, xData);
 	    
-	} while(false);
+            double[] coefficient = reg.estimateRegressionParameters();
+	    System.out.println("regression: " + Arrays.toString(coefficient));
+	    System.out.println("   Current coefs: " + Arrays.toString(coefs) + "\n");
+
+	    Thread.sleep(3000);
+
+	    for(int yu = 0; yu < coefs.length; yu++) {
+		coefs[yu] -= (float) coefficient[yu] * 0.001f;
+	    }
+
+	    power = 0;
+	    
+	} while(loops < 100);
+	power = 0;
     }
 
     private static HashMap<Long, Float> getAccel(HashMap<Long, Float> pos) {
@@ -176,7 +236,8 @@ public class Main {
 	HashMap<Long, Float> derivs = new HashMap(points.size() - 1);
 	for (int i = 0; i < points.size() - 2; i++) {
 	    //Calculate the numerical derivative between i and i+1
-	    derivs.put(offset + step*i, (float)((points.get(i*step + offset - step / 2)-points.get((i+1)*step + offset - step / 2))/((double)step/(double)nanosPerSecond)));
+	    derivs.put(offset + step*i, (float)((points.get(i*step + offset - step / 2)-points.get((i+1)*step +
+				       offset - step / 2))/((double)step/(double)nanosPerSecond)));
 	}
 	return derivs;
     }
@@ -228,8 +289,8 @@ public class Main {
 	Float[] result = new Float[matrix.length];
 	Arrays.fill(result, 0f);
 
-	System.out.println("solution: " + Arrays.toString(solution));
-	System.out.println("matrix: " + Arrays.toString(matrix[0]) + " " + Arrays.toString(matrix[1]) + " " + Arrays.toString(matrix[2]));
+	//System.out.println("solution: " + Arrays.toString(solution));
+	//System.out.println("matrix: " + Arrays.toString(matrix[0]) + " " + Arrays.toString(matrix[1]) + " " + Arrays.toString(matrix[2]));
 	for(int i = matrix.length - 1; i >= 0; i--) {
 	    //System.out.println("i: " + i);
 	    //System.out.println("solution[i]: " + solution[i]);
@@ -240,7 +301,7 @@ public class Main {
 	    solution[i] = 0f;
 	    for (int j = i - 1; j >= 0; j--) {
 		solution[j] -= matrix[j][i] * result[i];
-		System.out.println("solution: " + Arrays.toString(solution));
+		//System.out.println("solution: " + Arrays.toString(solution));
 	    }
 	}
 

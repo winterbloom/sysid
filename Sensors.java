@@ -20,7 +20,7 @@ public class Sensors implements Runnable {
         final GpioPinDigitalOutput trig = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_04, "trig", PinState.LOW);
         final GpioPinDigitalInput echo = gpio.provisionDigitalInputPin(RaspiPin.GPIO_05);
 	int loopCycle = 0;
-        while(true || !Thread.currentThread().isInterrupted()) {
+        while(!Thread.currentThread().isInterrupted()) {
             try {
 		wait(5);
 		//System.out.println("p1");
@@ -51,7 +51,7 @@ public class Sensors implements Runnable {
 	        senseFilter[loopNo] = this.senseVal;
 	        //System.out.println("p9");
 	        Main.setSense(senseVal, getFilterDist());
-                //System.out.println("p10");
+		//System.out.println("p10");
 	    }
 	    //System.out.println(Thread.currentThread().isInterrupted() + " " + loopCycle++ + ": " + senseVal);
 	    

@@ -66,9 +66,9 @@ public class AdafruitServoHatExample {
 		//Set pulse width operating limits of servo, consult servo data sheet
 		//for manufaturer's recommended operating limits. Values
 		//are in milliseconds;
-		float minimumPulseWidth = 0.6f;
-		float neutralPulseWidth = 1.5f;
-		float maximumPulseWidth = 2.4f;
+		float minimumPulseWidth = 0.01f;
+		float neutralPulseWidth = 2.4f;
+		float maximumPulseWidth = 4.8f;
 		servo.setOperatingLimits(minimumPulseWidth, neutralPulseWidth, maximumPulseWidth);
 		
 		//Set relative range of servo for setPosition() commanding

@@ -38,7 +38,7 @@ import java.util.Map;
  */
 public class AdafruitServoHat extends AdafruitHat {
 
-	protected double defaultFrequency = 50; //default frequency for AdafruitServoHat
+	protected double defaultFrequency = 500; //default frequency for AdafruitServoHat
 	
 	//Tracks if a servo has already been allocated.
 	public final  Map<String,Boolean> servoAllocated = new HashMap<String,Boolean>();
